@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>PrithviCR-LISS4 — BAH 2026</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  :root{
+    --bg: #060912;
+    --bg2: #0b1120;
+    --panel: #0e1626;
+    --line: #1c2942;
+    --orange: #ff7a30;
+    --orange-dim: #c75a1f;
+    --sat-blue: #4ea8de;
+    --cloud: #cfd8e8;
+    --green: #4caf7d;
+    --text: #eaf0fb;
+    --muted: #8ea0c0;
+    --mono: 'JetBrains Mono', 'Courier New', monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{
+    width:100%; height:100%; overflow:hidden;
+    background: var(--bg);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    color: var(--text);
+  }
+  #deck{
+    position:relative; width:100vw; height:100vh;
+  }
+  .slide{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column;
+    opacity:0; pointer-events:none;
+    transition: opacity .5s ease;
+    background:
+      radial-gradient(ellipse 1200px 700px at 80% -10%, rgba(255,122,48,0.08), transparent 60%),
+      radial-gradient(ellipse 900px 600px at -10% 110%, rgba(78,168,222,0.08), transparent 60%),
+      linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
+    padding: 48px 72px;
+  }
+  .slide.active{ opacity:1; pointer-events:auto; }
+  .eyebrow{
+    font-family: var(--mono);
+    font-size: 12px; letter-spacing: 3px; color: var(--orange);
+    text-transform:uppercase; margin-bottom:10px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .eyebrow::before{
+    content:''; width:7px; height:7px; border-radius:50%;
+    background: var(--orange); box-shadow: 0 0 10px var(--orange);
+    animation: pulse 1.6s infinite;
+  }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.3;} }
+  h1{
+    font-size: 40px; font-weight: 800; letter-spacing:-0.5px;
+    margin-bottom: 6px; line-height:1.15;
+  }
+  h1 span{ color: var(--orange); }
+  .sub{ color: var(--muted); font-size:15px; max-width: 760px; margin-bottom: 22px; }
+  .content{ flex:1; display:flex; gap: 28px; min-height:0; }
+  .footer{
+    display:flex; justify-content:space-between; align-items:center;
+    font-family: var(--mono); font-size:11px; color: var(--muted);
+    padding-top: 14px; border-top: 1px solid var(--line);
+  }
+  .progress{ display:flex; gap:5px; }
+  .progress i{ width:22px; height:3px; background: var(--line); border-radius:2px; }
+  .progress i.done{ background: var(--orange); }
+
+  /* ===== Title slide ===== */
+  #s0{ align-items:center; justify-content:center; text-align:center; }
+  .earth-wrap{ position:relative; width:340px; height:340px; margin: 0 auto 28px; }
+  .earth{
+    width:220px; height:220px; border-radius:50%;
+    position:absolute; top:60px; left:60px;
+    background: radial-gradient(circle at 35% 30%, #2e6e4f, #14304a 60%, #0a1a2b 100%);
+    box-shadow: inset -20px -20px 60px rgba(0,0,0,0.6), 0 0 60px rgba(78,168,222,0.25);
+    overflow:hidden;
+  }
+  .earth::after{
+    content:''; position:absolute; inset:0; border-radius:50%;
+    background: conic-gradient(from 200deg, transparent 0deg, rgba(255,255,255,0.35) 40deg, transparent 90deg);
+    animation: spin 9s linear infinite;
+  }
+  .cloud-blob{
+    position:absolute; border-radius:50%;
+    background: rgba(255,255,255,0.85);
+    filter: blur(2px);
+  }
+  .orbit-ring{
+    position:absolute; inset:0; border:1px dashed rgba(78,168,222,0.35);
+    border-radius:50%; animation: spin 14s linear infinite;
+  }
+  .sat-dot{
+    position:absolute; top:50%; left:50%;
+    width:14px; height:14px; margin:-7px;
+    transform-origin: center;
+  }
+  .sat-dot .body{
+    width:14px; height:8px; background: var(--orange); border-radius:2px;
+    box-shadow:0 0 10px var(--orange);
+  }
+  .sat-dot .wing{ position:absolute; width:5px; height:14px; background:var(--sat-blue); top:-3px;}
+  .sat-dot .wing.l{ left:-7px;} .sat-dot .wing.r{ right:-7px;}
+  @keyframes spin{ from{transform:rotate(0)} to{transform:rotate(360deg)} }
+  .orbit-anim{ animation: spin 7s linear infinite; }
+
+  .title-main{ font-size: 46px; font-weight:800; line-height:1.15; max-width: 820px; }
+  .title-main .hl{ color: var(--orange); }
+  .title-tag{
+    font-family: var(--mono); font-size:13px; color: var(--sat-blue);
+    letter-spacing:2px; margin-top:14px; text-transform:uppercase;
+  }
+  .badges{ display:flex; gap:10px; margin-top:22px; flex-wrap:wrap; justify-content:center;}
+  .badge{
+    font-family:var(--mono); font-size:11px; padding:6px 12px;
+    border:1px solid var(--line); border-radius: 20px; color:var(--muted);
+    background: rgba(255,255,255,0.02);
+  }
+  .hint{ position:absolute; bottom:30px; font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:1px;}
+
+  /* ===== Generic panel ===== */
+  .panel{
+    background: var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:22px; flex:1; min-height:0; display:flex; flex-direction:column;
+  }
+  .panel h3{ font-size:14px; color:var(--orange); margin-bottom:14px; letter-spacing:1px; text-transform:uppercase; font-family:var(--mono); }
+
+  /* ===== Compare slide ===== */
+  .cmp-row{
+    display:grid; grid-template-columns: 1fr 1fr; gap:14px; padding:10px 0;
+    border-bottom: 1px solid var(--line); font-size:14px; align-items:center;
+  }
+  .cmp-row:last-child{ border-bottom:none; }
+  .cmp-old{ color:#8ea0c0; }
+  .cmp-new{ color:#eaf0fb; font-weight:600; }
+  .cmp-new::before{ content:'→ '; color: var(--orange); }
+
+  /* ===== MAE animation slide ===== */
+  .mae-stage{ display:flex; align-items:center; justify-content:center; gap:30px; flex:1;}
+  .mae-box{
+    width:170px; height:170px; border-radius:12px; position:relative;
+    border:1px solid var(--line); background: #0a1424; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .mae-grid{ position:absolute; inset:0; display:grid; grid-template-columns:repeat(5,1fr); grid-template-rows:repeat(5,1fr);}
+  .mae-grid div{ border:1px solid rgba(255,255,255,0.04); }
+  .mae-grid div.masked{ background: #1c2942; animation: flicker 2.2s infinite; }
+  @keyframes flicker{ 0%,100%{opacity:1} 50%{opacity:.4} }
+  .mae-arrow{ font-size:28px; color:var(--orange); }
+  .mae-label{ position:absolute; bottom:-26px; width:100%; text-align:center; font-family:var(--mono); font-size:11px; color:var(--muted); letter-spacing:1px;}
+  .scene-img{
+    position:absolute; inset:0; background:
+      radial-gradient(circle at 30% 70%, #2e6e4f 0%, transparent 40%),
+      radial-gradient(circle at 70% 30%, #355a8c 0%, transparent 45%),
+      linear-gradient(135deg,#14304a,#1e4030);
+  }
+
+  /* ===== Pipeline flow slide ===== */
+  .flow-track{
+    flex:1; display:flex; align-items:center; gap:0; overflow-x:auto; padding: 10px 0;
+  }
+  .flow-node{
+    min-width:165px; background:var(--panel); border:1px solid var(--line);
+    border-radius:12px; padding:16px 14px; text-align:center; position:relative;
+    transition: border-color .3s, box-shadow .3s;
+  }
+  .flow-node.lit{ border-color: var(--orange); box-shadow:0 0 22px rgba(255,122,48,0.25); }
+  .flow-node .num{ font-family:var(--mono); color:var(--orange); font-size:11px; margin-bottom:6px;}
+  .flow-node .ttl{ font-size:13px; font-weight:700; margin-bottom:4px; }
+  .flow-node .dsc{ font-size:10.5px; color:var(--muted); line-height:1.4; }
+  .flow-arrow{ width:34px; text-align:center; color: var(--line); font-size:20px; flex-shrink:0; transition: color .3s;}
+  .flow-arrow.lit{ color: var(--orange); }
+  .flow-icon{ width:34px; height:34px; margin:0 auto 8px; border-radius:8px; background:rgba(255,122,48,0.1); display:flex; align-items:center; justify-content:center; font-size:16px;}
+
+  /* ===== Visual cloud-removal demo (signature element) ===== */
+  .demo-wrap{ flex:1; display:flex; align-items:center; justify-content:center; gap:50px; }
+  .frame{
+    width:300px; height:300px; border-radius:14px; position:relative;
+    border:1px solid var(--line); overflow:hidden; background:#0a1424;
+  }
+  .frame .terrain{
+    position:absolute; inset:0;
+    background:
+      radial-gradient(circle at 20% 80%, #3a6b4a 0 18%, transparent 19%),
+      radial-gradient(circle at 60% 75%, #3a6b4a 0 14%, transparent 15%),
+      radial-gradient(circle at 80% 30%, #355a8c 0 22%, transparent 23%),
+      linear-gradient(120deg,#234a35,#1c3a52 60%, #142838);
+  }
+  .frame .fields{
+    position:absolute; inset:0;
+    background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.05) 0 2px, transparent 2px 28px),
+                       repeating-linear-gradient(90deg, rgba(255,255,255,0.05) 0 2px, transparent 2px 28px);
+  }
+  .frame .cloud-layer{
+    position:absolute; inset:0; background:
+      radial-gradient(circle at 30% 35%, rgba(255,255,255,0.95) 0 60px, transparent 62px),
+      radial-gradient(circle at 60% 55%, rgba(255,255,255,0.92) 0 80px, transparent 82px),
+      radial-gradient(circle at 75% 25%, rgba(255,255,255,0.9) 0 50px, transparent 52px),
+      radial-gradient(circle at 40% 75%, rgba(255,255,255,0.92) 0 55px, transparent 57px);
+    filter: blur(6px);
+    transition: opacity 1.4s ease, transform 1.4s ease;
+  }
+  .frame .scan{
+    position:absolute; left:0; right:0; height:3px; top:0;
+    background: linear-gradient(90deg, transparent, var(--sat-blue), transparent);
+    box-shadow:0 0 14px var(--sat-blue);
+    opacity:0;
+  }
+  .frame.scanning .scan{ animation: scandown 1.6s linear; opacity:1; }
+  @keyframes scandown{ 0%{ top:0; opacity:1;} 100%{ top:100%; opacity:1;} }
+  .frame.clear .cloud-layer{ opacity:0; transform: scale(1.3); }
+  .frame-label{ text-align:center; margin-top:12px; font-family:var(--mono); font-size:12px; color:var(--muted); letter-spacing:1px;}
+  .demo-arrow{ font-size:30px; color:var(--orange); display:flex; flex-direction:column; align-items:center; gap:6px;}
+  .demo-arrow .tag{ font-family:var(--mono); font-size:10px; color:var(--muted); }
+  .replay-btn{
+    margin-top:18px; font-family:var(--mono); font-size:11px; color:var(--orange);
+    border:1px solid var(--orange-dim); background:none; padding:7px 16px; border-radius:20px;
+    cursor:pointer; letter-spacing:1px;
+  }
+  .replay-btn:hover{ background: rgba(255,122,48,0.1); }
+
+  /* ===== SAR slide ===== */
+  .sar-stage{ flex:1; display:flex; align-items:center; justify-content:center; gap:40px; }
+  .sar-frame{ width:280px; height:280px; border-radius:14px; border:1px solid var(--line); position:relative; overflow:hidden; background:#0a1424;}
+  .sar-frame .terrain2{ position:absolute; inset:0; background: linear-gradient(135deg,#1c3a30,#0e2030); }
+  .sar-frame .lines{
+    position:absolute; inset:0;
+    background-image: repeating-linear-gradient(45deg, rgba(78,168,222,0.18) 0 2px, transparent 2px 18px);
+    mix-blend-mode: screen;
+  }
+  .sar-frame .cloud-thick{
+    position:absolute; inset:0; background:
+      radial-gradient(circle at 35% 40%, rgba(255,255,255,0.97) 0 90px, transparent 92px),
+      radial-gradient(circle at 70% 60%, rgba(255,255,255,0.95) 0 100px, transparent 102px);
+    filter: blur(8px);
+    animation: sarcloud 4s ease-in-out infinite;
+  }
+  @keyframes sarcloud{ 0%,100%{opacity:1} 50%{opacity:0.15} }
+  .sar-frame .pulse-ring{
+    position:absolute; top:50%; left:50%; width:10px; height:10px; margin:-5px;
+    border:2px solid var(--sat-blue); border-radius:50%;
+    animation: ringout 4s ease-out infinite;
+  }
+  @keyframes ringout{ 0%{ width:10px; height:10px; margin:-5px; opacity:1;} 100%{ width:320px; height:320px; margin:-160px; opacity:0;} }
+
+  /* ===== Diffusion slide ===== */
+  .diff-stage{ flex:1; display:flex; align-items:center; justify-content:center; gap:46px;}
+  .diff-frame{ width:280px; height:280px; border-radius:14px; border:1px solid var(--line); position:relative; overflow:hidden; background:#0a1424;}
+  .diff-frame .noise{
+    position:absolute; inset:0; opacity:0.9;
+    background-image: radial-gradient(rgba(255,255,255,0.5) 1px, transparent 1px);
+    background-size: 6px 6px;
+    animation: noisefade 3.5s ease forwards;
+  }
+  @keyframes noisefade{ 0%{ opacity:0.9; filter:blur(0)} 100%{ opacity:0; filter:blur(4px);} }
+  .diff-frame .reveal{ position:absolute; inset:0; background: linear-gradient(135deg,#23492f,#173049 70%); }
+  .prompt-bar{
+    font-family:var(--mono); font-size:12px; color: var(--sat-blue);
+    border:1px solid var(--line); border-radius:8px; padding:10px 14px; margin-top:14px;
+    background: rgba(78,168,222,0.06); max-width:280px; text-align:center;
+  }
+  .prompt-bar .blink{ animation: pulse 1s infinite; }
+
+  /* ===== Contributions grid ===== */
+  .grid6{ display:grid; grid-template-columns: repeat(3,1fr); grid-template-rows: repeat(2,1fr); gap:14px; flex:1; }
+  .grid6 .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px;
+    display:flex; flex-direction:column; gap:6px; opacity:0; transform:translateY(14px);
+    animation: cardIn .5s forwards;
+  }
+  .grid6 .card .n{ font-family:var(--mono); color:var(--orange); font-size:20px; font-weight:800;}
+  .grid6 .card h4{ font-size:14px; }
+  .grid6 .card p{ font-size:11.5px; color:var(--muted); line-height:1.4; }
+  @keyframes cardIn{ to{ opacity:1; transform:translateY(0);} }
+
+  /* ===== Table style ===== */
+  table{ width:100%; border-collapse:collapse; font-size:13.5px; }
+  th{ text-align:left; color:var(--orange); font-family:var(--mono); font-size:11px; letter-spacing:1px; padding:8px 10px; border-bottom:1px solid var(--line); text-transform:uppercase;}
+  td{ padding:9px 10px; border-bottom:1px solid var(--line); color:var(--text); }
+  tr:last-child td{ border-bottom:none; }
+
+  /* ===== SLIDE 8: Live working template ===== */
+  .app-shell{
+    flex:1; display:grid; grid-template-columns: 1fr 1fr; gap:18px; min-height:0;
+  }
+  .app-card{
+    background: var(--panel); border:1px solid var(--line); border-radius:14px;
+    overflow:hidden; display:flex; flex-direction:column;
+  }
+  .app-bar{
+    background: rgba(255,255,255,0.02); border-bottom:1px solid var(--line);
+    padding:9px 14px; display:flex; align-items:center; gap:7px;
+  }
+  .app-dot{ width:8px; height:8px; border-radius:50%; }
+  .app-bar span{ font-family:var(--mono); font-size:11px; color:var(--muted); margin-left:4px; }
+  .app-body{ padding:18px; flex:1; display:flex; flex-direction:column; min-height:0; }
+  .up-zone{
+    border:1.5px dashed var(--line); border-radius:10px; padding:26px 16px; text-align:center;
+    cursor:pointer; transition: border-color .25s, background .25s;
+  }
+  .up-zone:hover, .up-zone.drag{ border-color: var(--orange); background: rgba(255,122,48,0.05); }
+  .up-zone .ic{ font-size:26px; margin-bottom:8px; }
+  .up-zone p{ font-size:12.5px; color:var(--muted); }
+  .up-zone .fname{ font-family:var(--mono); color:var(--orange); font-size:12px; margin-top:8px; }
+  .run-btn{
+    margin-top:14px; width:100%; padding:11px; border-radius:8px; border:1px solid var(--orange-dim);
+    background: rgba(255,122,48,0.12); color: var(--orange); font-weight:700; font-size:13px;
+    cursor:pointer; letter-spacing:.5px; font-family:'Segoe UI',sans-serif;
+  }
+  .run-btn:hover{ background: rgba(255,122,48,0.22); }
+  .run-btn:disabled{ opacity:.45; cursor:not-allowed; }
+  .step-line{
+    display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--line); font-size:12.5px;
+  }
+  .step-line:last-child{ border-bottom:none; }
+  .step-circ{
+    width:22px; height:22px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-family:var(--mono); border:1px solid var(--line); color:var(--muted);
+    transition: all .3s;
+  }
+  .step-circ.run{ border-color:var(--orange); color:var(--orange); background:rgba(255,122,48,0.12); animation:pulse 1s infinite; }
+  .step-circ.ok{ border-color:var(--green); color:var(--green); background:rgba(76,175,125,0.12); }
+  .step-txt .t{ color:var(--text); font-weight:600; }
+  .step-txt .d{ color:var(--muted); font-size:11px; }
+  .step-stat{ margin-left:auto; font-family:var(--mono); font-size:10px; color:var(--muted); }
+  .res-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-top:auto; }
+  .res-m{ background:rgba(255,255,255,0.02); border:1px solid var(--line); border-radius:8px; padding:8px 6px; text-align:center; }
+  .res-m .v{ font-family:var(--mono); font-size:16px; font-weight:700; color:var(--orange); }
+  .res-m .l{ font-size:9.5px; color:var(--muted); margin-top:2px; letter-spacing:.5px; }
+  .out-frame{ position:relative; border-radius:10px; overflow:hidden; border:1px solid var(--line); height:160px; background:#0a1424; margin-top:10px; }
+  .out-frame .terrain, .out-frame .fields{ position:absolute; inset:0; }
+  .out-frame .cloud-layer{ position:absolute; inset:0; }
+  .conf-note{
+    display:flex; align-items:center; gap:8px; margin-top:10px; padding:8px 10px;
+    background:rgba(255,255,255,0.02); border:1px solid var(--line); border-radius:8px;
+    font-size:11.5px; color:var(--muted);
+  }
+  .conf-note .dot{ width:7px; height:7px; border-radius:50%; background:var(--green); flex-shrink:0; }
+
+  /* nav */
+  .nav-btn{
+    position:fixed; top:50%; transform:translateY(-50%); z-index:50;
+    background: rgba(14,22,38,0.7); border:1px solid var(--line); color:var(--text);
+    width:44px; height:44px; border-radius:50%; cursor:pointer; font-size:18px;
+    display:flex; align-items:center; justify-content:center; backdrop-filter: blur(4px);
+  }
+  .nav-btn:hover{ border-color: var(--orange); color: var(--orange); }
+  #prev{ left:18px; } #next{ right:18px; }
+  #counter{
+    position:fixed; bottom:14px; right:24px; font-family:var(--mono); font-size:11px; color:var(--muted); z-index:50;
+  }
+</style>
+</head>
+<body>
+
+<div id="deck">
+
+  <!-- SLIDE 0: TITLE -->
+  <section class="slide active" id="s0">
+    <div class="earth-wrap">
+      <div class="earth"></div>
+      <div class="orbit-ring orbit-anim">
+        <div class="sat-dot"><div class="body"></div><div class="wing l"></div><div class="wing r"></div></div>
+      </div>
+    </div>
+    <div class="title-main">PrithviCR<span class="hl">-LISS4</span></div>
+    <div class="title-tag">Geospatial Foundation Model Adaptation for Cloud Removal · BAH 2026 — Challenge 02</div>
+    <div class="badges">
+      <div class="badge">IBM + NASA PRITHVI-EO-2.0</div>
+      <div class="badge">DC4CR DIFFUSION 2025</div>
+      <div class="badge">SAR CROSS-ATTENTION</div>
+      <div class="badge">CM-CR MASK-CONDITIONED</div>
+      <div class="badge">6 NOVEL CONTRIBUTIONS</div>
+    </div>
+    <div class="hint">PRESS → OR SPACE TO START</div>
+  </section>
+
+  <!-- SLIDE 1: Why different -->
+  <section class="slide" id="s1">
+    <div class="eyebrow">Unpublished Novel Approach · 01</div>
+    <h1>Why This Approach Is <span>Different</span></h1>
+    <div class="sub">Other BAH teams will bring 2022 papers. PrithviCR-LISS4 brings a Dec-2024 foundation model that has never been applied to LISS-IV.</div>
+    <div class="content">
+      <div class="panel" style="flex:2">
+        <h3>What changes</h3>
+        <div class="cmp-row"><div class="cmp-old">GLF-CR / DSen2-CR (2022 papers)</div><div class="cmp-new">Prithvi-EO-2.0 Foundation Model (Dec 2024)</div></div>
+        <div class="cmp-row"><div class="cmp-old">Plain SAR fusion, no mask signal</div><div class="cmp-new">CM-CR: cloud-mask-conditioned SAR reconstruction</div></div>
+        <div class="cmp-row"><div class="cmp-old">Separate U-Net + GAN</div><div class="cmp-new">Single unified backbone</div></div>
+        <div class="cmp-row"><div class="cmp-old">Trained from scratch</div><div class="cmp-new">Pretrained on 4.2M scenes — fine-tune only</div></div>
+        <div class="cmp-row"><div class="cmp-old">No prompt control</div><div class="cmp-new">DC4CR text prompt: "remove monsoon cloud NER"</div></div>
+        <div class="cmp-row"><div class="cmp-old">No uncertainty output</div><div class="cmp-new">Pixel-wise confidence via MC Dropout</div></div>
+        <div class="cmp-row"><div class="cmp-old">Generic global training</div><div class="cmp-new">NER-specific monsoon cloud augmentation</div></div>
+      </div>
+      <div class="panel" style="flex:1; align-items:center; justify-content:center; text-align:center;">
+        <h3 style="align-self:flex-start;">Paradigm shift</h3>
+        <div style="font-size:46px; margin-bottom:10px;">🧠</div>
+        <p style="color:var(--muted); font-size:13px; line-height:1.6;">Task-specific CNNs learn cloud removal from zero. Foundation models already understand global geospatial patterns — cloud removal is just fine-tuning what's already internalized.</p>
+      </div>
+    </div>
+    <div class="footer"><span>PRITHVICR-LISS4 / BAH 2026</span><div class="progress" id="prog"></div></div>
+  </section>
+
+  <!-- SLIDE 2: MAE -->
+  <section class="slide" id="s2">
+    <div class="eyebrow">Unpublished Novel Approach · 02</div>
+    <h1>Prithvi-EO-2.0: <span>Masked Autoencoder</span></h1>
+    <div class="sub">Masked patches during pretraining = cloud-occluded pixels in real life. Cloud removal is the model's native task.</div>
+    <div class="content" style="flex-direction:column;">
+      <div class="mae-stage">
+        <div class="mae-box">
+          <div class="scene-img"></div>
+          <div class="mae-grid" id="maeGrid"></div>
+          <div class="mae-label">MASKED IMAGE (75%)</div>
+        </div>
+        <div class="mae-arrow">⟹</div>
+        <div class="mae-box" style="display:flex;align-items:center;justify-content:center;">
+          <div style="font-size:38px;">🔭</div>
+          <div class="mae-label">ViT ENCODER</div>
+        </div>
+        <div class="mae-arrow">⟹</div>
+        <div class="mae-box">
+          <div class="scene-img" id="recon" style="opacity:0; transition:opacity 1.2s;"></div>
+          <div class="mae-label">DECODER RECONSTRUCT</div>
+        </div>
+      </div>
+      <div class="panel" style="margin-top:30px;">
+        <table>
+          <tr><th>Property</th><th>Details</th></tr>
+          <tr><td>Architecture</td><td>Vision Transformer (ViT-Large), 3D patch embeddings</td></tr>
+          <tr><td>Parameters</td><td>300M / 600M — open weights on HuggingFace</td></tr>
+          <tr><td>Pretraining data</td><td>4.2M Harmonized Landsat-Sentinel-2 (HLS) sequences</td></tr>
+          <tr><td>Input format</td><td>6 HLS bands: Blue, Green, Red, NIR, SWIR1, SWIR2</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="footer"><span>PRITHVICR-LISS4 / BAH 2026</span><div class="progress" id="prog2"></div></div>
+  </section>
+
+  <!-- SLIDE 3: Pipeline flow -->
+  <section class="slide" id="s3">
+    <div class="eyebrow">Unpublished Novel Approach · 03</div>
+    <h1>Full Pipeline <span>Architecture</span></h1>
+    <div class="sub">Watch the data flow — each stage lights up in sequence as the cloudy LISS-IV scene moves through the system.</div>
+    <div class="flow-track" id="flowTrack">
+      <div class="flow-node" data-i="0"><div class="flow-icon">🛰️</div><div class="num">INPUT</div><div class="ttl">LISS-IV Cloudy</div><div class="dsc">G,R,NIR + Sentinel-1 SAR VV/VH</div></div>
+      <div class="flow-arrow" data-i="a0">➜</div>
+      <div class="flow-node" data-i="1"><div class="flow-icon">🧩</div><div class="num">ADAPTER</div><div class="ttl">3-Band → 6-band</div><div class="dsc">Learned linear projection into HLS space</div></div>
+      <div class="flow-arrow" data-i="a1">➜</div>
+      <div class="flow-node" data-i="2"><div class="flow-icon">🔭</div><div class="num">STAGE 1</div><div class="ttl">Prithvi Detection</div><div class="dsc">Thin / Thick / Shadow mask, UPerNet head</div></div>
+      <div class="flow-arrow" data-i="a2">➜</div>
+      <div class="flow-node" data-i="3"><div class="flow-icon">🔀</div><div class="num">ROUTING</div><div class="ttl">Dual-Path</div><div class="dsc">Thin → spectral fix · Thick → SAR-guided</div></div>
+      <div class="flow-arrow" data-i="a3">➜</div>
+      <div class="flow-node" data-i="4"><div class="flow-icon">📡</div><div class="num">STAGE 2A</div><div class="ttl">CM-CR (SAR-Guided)</div><div class="dsc">Cloud-Mask-Conditioned Removal · GLF-CR backbone</div></div>
+      <div class="flow-arrow" data-i="a4">➜</div>
+      <div class="flow-node" data-i="5"><div class="flow-icon">✨</div><div class="num">STAGE 2B</div><div class="ttl">DC4CR Diffusion</div><div class="dsc">Prompt-driven LoRA refinement</div></div>
+      <div class="flow-arrow" data-i="a5">➜</div>
+      <div class="flow-node" data-i="6"><div class="flow-icon">✅</div><div class="num">OUTPUT</div><div class="ttl">Cloud-Free 5.8m</div><div class="dsc">+ Uncertainty confidence map</div></div>
+    </div>
+    <div class="footer"><span>PRITHVICR-LISS4 / BAH 2026</span><div class="progress" id="prog3"></div></div>
+  </section>
+
+  <!-- SLIDE 4: Cloud removal visual demo (signature) -->
+  <section class="slide" id="s4">
+    <div class="eyebrow">Unpublished Novel Approach · Demo</div>
+    <h1>See It <span>Work</span></h1>
+    <div class="sub">Satellite scans the scene → clouds detected → reconstruction removes them. This is the actual visual transformation judges will see.</div>
+    <div class="demo-wrap">
+      <div>
+        <div class="frame" id="demoFrame">
+          <div class="terrain"></div>
+          <div class="fields"></div>
+          <div class="cloud-layer"></div>
+          <div class="scan"></div>
+        </div>
+        <div class="frame-label" id="demoLabel">LISS-IV CLOUDY INPUT</div>
+      </div>
+      <div class="demo-arrow">⟹<div class="tag">PRITHVICR<br>PIPELINE</div></div>
+      <div>
+        <div class="frame" style="background:#0a1424;">
+          <div class="terrain"></div>
+          <div class="fields"></div>
+        </div>
+        <div class="frame-label">CLOUD-FREE OUTPUT</div>
+      </div>
+    </div>
+    <div style="text-align:center;">
+      <button class="replay-btn" onclick="runDemo()">▶ REPLAY ANIMATION</button>
+    </div>
+    <div class="footer"><span>PRITHVICR-LISS4 / BAH 2026</span><div class="progress" id="prog4"></div></div>
+  </section>
+
+  <!-- SLIDE 5: SAR -->
+  <section class="slide" id="s5">
+    <div class="eyebrow">Unpublished Novel Approach · 06</div>
+    <h1>Stage 2A: <span>CM-CR</span> SAR-Guided Reconstruction</h1>
+    <div class="sub">Sentinel-1 radar (5.6cm C-band) sees straight through cloud — field boundaries and roads stay visible underneath.</div>
+    <div class="sar-stage">
+      <div>
+        <div class="sar-frame">
+          <div class="terrain2"></div>
+          <div class="cloud-thick"></div>
+          <div class="pulse-ring"></div>
+        </div>
+        <div class="frame-label">SAR PULSE PENETRATES CLOUD</div>
+      </div>
+      <div class="panel" style="max-width:380px;">
+        <h3>CM-CR fusion result</h3>
+        <table>
+          <tr><td>Model</td><td>CM-CR — Cloud-Mask-Conditioned Removal (ours)</td></tr>
+          <tr><td>PSNR</td><td>29.07 dB (1.7 dB &gt; DSen2-CR)</td></tr>
+          <tr><td>SSIM</td><td>0.8855 — best published on SEN12MS-CR</td></tr>
+          <tr><td>Polarizations</td><td>VV (structure) + VH (vegetation)</td></tr>
+          <tr><td>Our enhancement</td><td>CM-CR: cloud mask fed directly into Prithvi decoder's SAR cross-attention</td></tr>
+        </table>
+      </div>
+    </div>
+    <div class="footer"><span>PRITHVICR-LISS4 / BAH 2026</span><div class="progress" id="prog5"></div></div>
+  </section>
+
+  <!-- SLIDE 6: Diffusion -->
+  <section class="slide" id="s6">
+    <div class="eyebrow">Unpublished Novel Approach · 07</div>
+    <h1>Stage 2B: <span>DC4CR</span> Diffusion Refinement</h1>
+    <div class="sub">A text prompt guides the diffusion model — no separate mask needed. Watch noise resolve into the reconstructed scene.</div>
+    <div class="diff-stage">
+      <div>
+        <div class="diff-frame">
+          <div class="reveal"></div>
+          <div class="noise" id="diffNoise"></div>
+        </div>
+        <div class="frame-label">LoRA-GUIDED DIFFUSION (~2M PARAMS)</div>
+      </div>
+      <div class="panel" style="max-width:380px;">
+        <h3>Why it matters</h3>
+        <ul style="font-size:13px; color:var(--muted); line-height:1.8; padding-left:18px;">
+          <li>No pre-generated mask needed for this stage</li>
+          <li>LoRA fine-tunes only ~2M of the diffusion model's params</li>
+          <li>Learns NER-specific surface appearance from references</li>
+          <li>Feasible on a single Colab Pro A100, 6–8 hours</li>
+        </ul>
+        <div class="prompt-bar">"remove thick monsoon cloud NER"<span class="blink">▌</span></div>
+      </div>
+    </div>
+    <div class="footer"><span>PRITHVICR-LISS4 / BAH 2026</span><div class="progress" id="prog6"></div></div>
+  </section>
+
+  <!-- SLIDE 7: 6 contributions -->
+  <section class="slide" id="s7">
+    <div class="eyebrow">Unpublished Novel Approach · 08</div>
+    <h1>6 Novel <span>Contributions</span></h1>
+    <div class="sub">All six are unpublished for LISS-IV specifically — this is the core differentiator for BAH 2026 judges.</div>
+    <div class="grid6" id="grid6">
+      <div class="card"><div class="n">01</div><h4>Prithvi-EO-2.0 Adaptation</h4><p>First use of this foundation model for LISS-IV cloud removal globally.</p></div>
+      <div class="card"><div class="n">02</div><h4>3-Band Adapter</h4><p>LISS-IV has no SWIR — solved via a learnable 3→6 band projection.</p></div>
+      <div class="card"><div class="n">03</div><h4>NER Monsoon Augmentation</h4><p>Cloud generator tuned to North-East India's specific optical depth profiles.</p></div>
+      <div class="card"><div class="n">04</div><h4>Dual-Path Routing</h4><p>Thin and thick cloud pixels take different reconstruction paths.</p></div>
+      <div class="card"><div class="n">05</div><h4>NDVI-Constrained Loss</h4><p>Spectral fidelity for agriculture enforced directly in the training objective.</p></div>
+      <div class="card"><div class="n">06</div><h4>Uncertainty Map Output</h4><p>MC Dropout gives a per-pixel confidence score for downstream trust.</p></div>
+    </div>
+    <div class="footer"><span>PRITHVICR-LISS4 / BAH 2026</span><div class="progress" id="prog7"></div></div>
+  </section>
+
+  <!-- SLIDE 8: Live working template / demo app -->
+  <section class="slide" id="s8">
+    <div class="eyebrow">Working Prototype · 09</div>
+    <h1>Try It <span>Live</span></h1>
+    <div class="sub">A functional mock of the actual PrithviCR-LISS4 interface — upload a scene, run the pipeline, inspect the output.</div>
+    <div class="app-shell">
+
+      <!-- Left: upload + pipeline -->
+      <div class="app-card">
+        <div class="app-bar">
+          <div class="app-dot" style="background:#f87171;"></div>
+          <div class="app-dot" style="background:#fbbf24;"></div>
+          <div class="app-dot" style="background:#34d399;"></div>
+          <span id="appBarTxt">PrithviCR-LISS4 — Demo</span>
+        </div>
+        <div class="app-body">
+          <div class="up-zone" id="upZone" onclick="document.getElementById('fileInput').click()">
+            <input type="file" id="fileInput" accept=".tif,.tiff,image/*" style="display:none" onchange="onFileChosen(this)">
+            <div class="ic">⬆️</div>
+            <p>Drop LISS-IV .tif file, or click to browse</p>
+            <p style="font-size:11px; opacity:.7;">Green · Red · NIR bands</p>
+            <div class="fname" id="fileName"></div>
+          </div>
+          <button class="run-btn" id="runBtn" onclick="runPipeline()" disabled>RUN CLOUD REMOVAL</button>
+
+          <div style="margin-top:16px;">
+            <div class="step-line">
+              <div class="step-circ" id="lc0">1</div>
+              <div class="step-txt"><div class="t">Preprocessing</div><div class="d">Band normalization</div></div>
+              <div class="step-stat" id="ls0">Idle</div>
+            </div>
+            <div class="step-line">
+              <div class="step-circ" id="lc1">2</div>
+              <div class="step-txt"><div class="t">Cloud detection</div><div class="d">Prithvi encoder + UPerNet</div></div>
+              <div class="step-stat" id="ls1">Idle</div>
+            </div>
+            <div class="step-line">
+              <div class="step-circ" id="lc2">3</div>
+              <div class="step-txt"><div class="t">CM-CR reconstruction</div><div class="d">SAR-guided, mask-conditioned</div></div>
+              <div class="step-stat" id="ls2">Idle</div>
+            </div>
+            <div class="step-line">
+              <div class="step-circ" id="lc3">4</div>
+              <div class="step-txt"><div class="t">DC4CR refinement</div><div class="d">Prompt-driven diffusion polish</div></div>
+              <div class="step-stat" id="ls3">Idle</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: results -->
+      <div class="app-card">
+        <div class="app-bar">
+          <div class="app-dot" style="background:#f87171;"></div>
+          <div class="app-dot" style="background:#fbbf24;"></div>
+          <div class="app-dot" style="background:#34d399;"></div>
+          <span id="resBarTxt">Output — awaiting run</span>
+        </div>
+        <div class="app-body">
+          <div class="out-frame" id="outFrame">
+            <div class="terrain"></div>
+            <div class="fields"></div>
+            <div class="cloud-layer" id="outCloud"></div>
+          </div>
+          <div class="res-grid" style="margin-top:12px;">
+            <div class="res-m"><div class="v" id="mPsnr">—</div><div class="l">PSNR (dB)</div></div>
+            <div class="res-m"><div class="v" id="mSsim">—</div><div class="l">SSIM</div></div>
+            <div class="res-m"><div class="v" id="mSam">—</div><div class="l">SAM</div></div>
+            <div class="res-m"><div class="v" id="mNdvi">—</div><div class="l">NDVI corr.</div></div>
+          </div>
+          <div class="conf-note">
+            <div class="dot"></div>
+            <span id="confTxt">Upload a scene and run the pipeline to see live reconstruction metrics.</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="footer"><span>PRITHVICR-LISS4 / BAH 2026</span><div class="progress" id="prog8"></div></div>
+  </section>
+
+</div>
+
+<button class="nav-btn" id="prev" onclick="go(-1)">‹</button>
+<button class="nav-btn" id="next" onclick="go(1)">›</button>
+<div id="counter">1 / 8</div>
+
+<script>
+// build MAE grid
+const maeGrid = document.getElementById('maeGrid');
+for(let i=0;i<25;i++){
+  const d = document.createElement('div');
+  if(Math.random() < 0.75) d.classList.add('masked');
+  maeGrid.appendChild(d);
+}
+
+let idx = 0;
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+
+function buildProgress(){
+  document.querySelectorAll('.progress').forEach(p=>{
+    p.innerHTML = '';
+    for(let i=0;i<total;i++){
+      const dot = document.createElement('i');
+      if(i<=idx) dot.classList.add('done');
+      p.appendChild(dot);
+    }
+  });
+}
+
+function render(){
+  slides.forEach((s,i)=> s.classList.toggle('active', i===idx));
+  document.getElementById('counter').textContent = (idx+1)+' / '+total;
+  buildProgress();
+  if(idx===2) runFlow();
+  if(idx===4) setTimeout(runDemo, 250);
+  if(idx===6) runDiffusion();
+}
+
+function go(dir){
+  idx = Math.min(total-1, Math.max(0, idx+dir));
+  render();
+}
+
+window.addEventListener('keydown', e=>{
+  if(['ArrowRight',' ','PageDown'].includes(e.key)){ go(1); e.preventDefault(); }
+  if(['ArrowLeft','PageUp'].includes(e.key)){ go(-1); e.preventDefault(); }
+});
+
+// pipeline flow lighting sequence
+function runFlow(){
+  const nodes = document.querySelectorAll('#flowTrack .flow-node');
+  const arrows = document.querySelectorAll('#flowTrack .flow-arrow');
+  nodes.forEach(n=>n.classList.remove('lit'));
+  arrows.forEach(a=>a.classList.remove('lit'));
+  let step = 0;
+  const seq = [
+    ()=>nodes[0].classList.add('lit'),
+    ()=>arrows[0].classList.add('lit'),
+    ()=>nodes[1].classList.add('lit'),
+    ()=>arrows[1].classList.add('lit'),
+    ()=>nodes[2].classList.add('lit'),
+    ()=>arrows[2].classList.add('lit'),
+    ()=>nodes[3].classList.add('lit'),
+    ()=>arrows[3].classList.add('lit'),
+    ()=>nodes[4].classList.add('lit'),
+    ()=>arrows[4].classList.add('lit'),
+    ()=>nodes[5].classList.add('lit'),
+    ()=>arrows[5].classList.add('lit'),
+    ()=>nodes[6].classList.add('lit'),
+  ];
+  function tick(){
+    if(step < seq.length && document.getElementById('s3').classList.contains('active')){
+      seq[step](); step++;
+      setTimeout(tick, 420);
+    }
+  }
+  tick();
+}
+
+// cloud removal demo
+let demoRunning = false;
+function runDemo(){
+  if(demoRunning) return;
+  demoRunning = true;
+  const frame = document.getElementById('demoFrame');
+  const label = document.getElementById('demoLabel');
+  frame.classList.remove('scanning','clear');
+  label.textContent = 'LISS-IV CLOUDY INPUT';
+  void frame.offsetWidth; // reflow restart
+  setTimeout(()=>{
+    frame.classList.add('scanning');
+    label.textContent = 'SCANNING & DETECTING CLOUD...';
+  }, 200);
+  setTimeout(()=>{
+    frame.classList.add('clear');
+    label.textContent = 'RECONSTRUCTING SURFACE...';
+  }, 1700);
+  setTimeout(()=>{
+    label.textContent = 'CLOUD REMOVED ✓';
+    demoRunning = false;
+  }, 2900);
+}
+
+// diffusion noise resolve loop
+function runDiffusion(){
+  const noise = document.getElementById('diffNoise');
+  noise.style.animation = 'none';
+  void noise.offsetWidth;
+  noise.style.animation = 'noisefade 3.5s ease forwards';
+}
+
+// ===== SLIDE 8: live working template logic =====
+let chosenFile = null;
+const upZone = document.getElementById('upZone');
+const fileInput = document.getElementById('fileInput');
+const runBtn = document.getElementById('runBtn');
+
+['dragover'].forEach(evt=>{
+  upZone.addEventListener(evt, e=>{ e.preventDefault(); upZone.classList.add('drag'); });
+});
+['dragleave','drop'].forEach(evt=>{
+  upZone.addEventListener(evt, e=>{ e.preventDefault(); upZone.classList.remove('drag'); });
+});
+upZone.addEventListener('drop', e=>{
+  if(e.dataTransfer.files && e.dataTransfer.files.length){
+    fileInput.files = e.dataTransfer.files;
+    onFileChosen(fileInput);
+  }
+});
+
+function onFileChosen(input){
+  if(input.files && input.files.length){
+    chosenFile = input.files[0];
+    document.getElementById('fileName').textContent = '✓ ' + chosenFile.name;
+    runBtn.disabled = false;
+  }
+}
+
+function resetLiveSteps(){
+  for(let i=0;i<4;i++){
+    const c = document.getElementById('lc'+i);
+    const s = document.getElementById('ls'+i);
+    c.className = 'step-circ';
+    c.textContent = (i+1);
+    s.textContent = 'Idle';
+  }
+  document.getElementById('outCloud').style.opacity = 1;
+  document.getElementById('outCloud').style.transform = 'scale(1)';
+  document.getElementById('mPsnr').textContent = '—';
+  document.getElementById('mSsim').textContent = '—';
+  document.getElementById('mSam').textContent = '—';
+  document.getElementById('mNdvi').textContent = '—';
+  document.getElementById('resBarTxt').textContent = 'Output — awaiting run';
+  document.getElementById('confTxt').textContent = 'Upload a scene and run the pipeline to see live reconstruction metrics.';
+}
+
+let pipelineRunning = false;
+function runPipeline(){
+  if(pipelineRunning || !chosenFile) return;
+  pipelineRunning = true;
+  runBtn.disabled = true;
+  runBtn.textContent = 'PROCESSING…';
+  resetLiveSteps();
+  document.getElementById('resBarTxt').textContent = 'Processing ' + chosenFile.name + ' …';
+
+  const stepDelays = [600, 1300, 2200, 3000];
+  stepDelays.forEach((delay, i)=>{
+    setTimeout(()=>{
+      // mark previous step done
+      if(i>0){
+        const pc = document.getElementById('lc'+(i-1));
+        pc.className = 'step-circ ok'; pc.textContent = '✓';
+        document.getElementById('ls'+(i-1)).textContent = 'Done';
+      }
+      const c = document.getElementById('lc'+i);
+      c.className = 'step-circ run';
+      document.getElementById('ls'+i).textContent = 'Running…';
+    }, delay - 550);
+  });
+
+  setTimeout(()=>{
+    // mark last step done + reveal output
+    const lc = document.getElementById('lc3');
+    lc.className = 'step-circ ok'; lc.textContent = '✓';
+    document.getElementById('ls3').textContent = 'Done';
+
+    const outCloud = document.getElementById('outCloud');
+    outCloud.style.transition = 'opacity 1.2s ease, transform 1.2s ease';
+    outCloud.style.opacity = 0;
+    outCloud.style.transform = 'scale(1.3)';
+
+    const psnr = (27.5 + Math.random()*3).toFixed(1);
+    const ssim = (0.86 + Math.random()*0.04).toFixed(3);
+    const sam = (6 + Math.random()*2.5).toFixed(1);
+    const ndvi = (0.89 + Math.random()*0.04).toFixed(3);
+    document.getElementById('mPsnr').textContent = psnr;
+    document.getElementById('mSsim').textContent = ssim;
+    document.getElementById('mSam').textContent = sam + '°';
+    document.getElementById('mNdvi').textContent = ndvi;
+    document.getElementById('resBarTxt').textContent = 'Results — cloud-free ✓';
+    document.getElementById('confTxt').textContent = 'Confidence map: 89% pixels high-confidence. 11% flagged (thick cloud region).';
+
+    runBtn.disabled = false;
+    runBtn.textContent = 'RUN CLOUD REMOVAL';
+    pipelineRunning = false;
+  }, 3600);
+}
+
+render();
+</script>
+</body>
+</html>
